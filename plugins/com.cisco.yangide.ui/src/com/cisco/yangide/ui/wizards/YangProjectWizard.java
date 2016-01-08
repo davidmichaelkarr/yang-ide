@@ -25,6 +25,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
@@ -42,6 +43,7 @@ import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.ui.internal.wizards.MavenProjectWizard;
 import org.eclipse.ui.IWorkbench;
 
+import com.cisco.yangide.core.nature.YangNature;
 import com.cisco.yangide.ui.YangUIPlugin;
 import com.cisco.yangide.ui.internal.IYangUIConstants;
 import com.cisco.yangide.ui.internal.YangUIImages;
@@ -141,6 +143,35 @@ public class YangProjectWizard extends MavenProjectWizard {
                                 new NullProgressMonitor());
                     }
 
+                    // Add Yang nature to project.
+                    IProjectDescription description = project.getDescription();
+                    String[]            natures     = description.getNatureIds();
+                    String[]            newNatures  = new String[natures.length + 1];
+                    System.arraycopy(natures, 0, newNatures, 0, natures.length);
+                    newNatures[natures.length] = YangNature.NATURE_ID;
+                    IStatus status = ResourcesPlugin.getWorkspace().validateNatureSet(newNatures);
+
+                    StringBuilder   sb  = new StringBuilder();
+                    sb.append("natures[");
+                    for (int ctr = 0; ctr < newNatures.length; ++ ctr) {
+                        sb.append(newNatures[ctr]);
+                        if (ctr < newNatures.length - 1)
+                            sb.append(", ");
+                    }
+                    sb.append("]");
+                    YangUIPlugin.log(IStatus.INFO, sb.toString());
+                    
+                    // check the status and decide what to do
+                    if (status.getCode() == IStatus.OK) {
+                      description.setNatureIds(newNatures);
+                      project.setDescription(description, null);
+                    } else {
+                        // TODO. Need to throw an exception here.
+                        if (status.getException() != null)
+                            YangUIPlugin.log("Unable to add Yang nature", status.getException());
+                        else
+                            YangUIPlugin.log(IStatus.ERROR, "Unable to add Yang nature: " + status.getMessage());
+                    }
                 } catch (CoreException e) {
                     YangUIPlugin.log(e.getMessage(), e);
                 } catch (IOException e) {

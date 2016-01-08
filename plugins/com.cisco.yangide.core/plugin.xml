@@ -68,4 +68,19 @@
             markerSeverity="2">
       </type>
     </extension>
+    
+    <extension id="com.cisco.yangide.core.yangnature" name="Yang Nature"
+          point="org.eclipse.core.resources.natures">
+       <runtime>
+          <run class="com.cisco.yangide.core.nature.YangNature"/>
+       </runtime>
+       <requires-nature id="org.eclipse.m2e.core.maven2Nature"/>
+       <builder id="com.cisco.yangide.core.yangbuilder"/>
+    </extension>
+    <extension id="com.cisco.yangide.core.yangbuilder" name="Yang Project Builder"
+          point="org.eclipse.core.resources.builders">
+       <builder hasNature="true">
+          <run class="com.cisco.yangide.core.nature.YangProjectBuilder"/>
+       </builder>
+    </extension>
 </plugin>

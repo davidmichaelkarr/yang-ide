@@ -481,7 +481,7 @@ public class IndexManager extends JobManager {
         return NO_REF_ELEMENTS;
     }
 
-    private void indexAllProjects() {
+    public void indexAllProjects() {
         // reindex all projects
         for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
             if (YangCorePlugin.isYangProject(project)) {

@@ -18,6 +18,8 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ISafeRunnable;
@@ -189,7 +191,12 @@ public class DeltaProcessor implements IResourceChangeListener, IElementChangedL
                 return;
 
             case IResourceChangeEvent.PRE_BUILD:
-                // nothing to do on pre-build
+                //YangModelManager.getIndexManager().indexAllProjects();
+//                try {
+//                    ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+//                } catch (CoreException ex) {
+//                    YangCorePlugin.log(ex, "Exception running full build.");
+//                }
                 return;
 
             case IResourceChangeEvent.POST_BUILD:

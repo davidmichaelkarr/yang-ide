@@ -10,8 +10,12 @@ package com.cisco.yangide.editor.actions;
 
 import java.util.ResourceBundle;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.TextEditorAction;
 
@@ -50,32 +54,44 @@ public class OpenDeclarationAction extends TextEditorAction {
             ISelection selection = editor.getSelectionProvider().getSelection();
             Module module = YangParserUtil.parseYangFile(editor.getDocument().get().toCharArray());
             ASTNode node = module.getNodeAtPosition(((ITextSelection) selection).getOffset());
+            IEditorInput    editorInput = editor.getEditorInput();
 
+            // Determine the current project so definitions from the current project or dependent projects, are preferred.
+            IProject    project = null;
+            if (editorInput instanceof FileEditorInput) {
+                if (((FileEditorInput) editorInput).getFile() != null)
+                    project = ((FileEditorInput) editorInput).getFile().getProject();
+            }
+            else {
+                YangUIPlugin.log(IStatus.WARNING,
+                                 "Could not determine project, because editorInput not FileEditorInput, but \"" + editorInput.getClass().getName() + "\".");
+            }
+            
             ElementIndexInfo[] searchResult = null;
 
             if (node instanceof ModuleImport) {
                 ModuleImport importNode = (ModuleImport) node;
                 searchResult = YangModelManager.search(null, importNode.getRevision(), importNode.getName(),
-                        ElementIndexType.MODULE, null, null);
+                        ElementIndexType.MODULE, project, null);
             } else if (node instanceof TypeReference) {
                 TypeReference ref = (TypeReference) node;
                 QName type = ref.getType();
                 searchResult = YangModelManager.search(type.getModule(), type.getRevision(), type.getName(),
-                        ElementIndexType.TYPE, null, null);
+                        ElementIndexType.TYPE, project, null);
                 if (searchResult.length == 0) {
                     searchResult = YangModelManager.search(type.getModule(), type.getRevision(), type.getName(),
-                            ElementIndexType.IDENTITY, null, null);
+                            ElementIndexType.IDENTITY, project, null);
                 }
             } else if (node instanceof UsesNode) {
                 UsesNode usesNode = (UsesNode) node;
                 QName ref = usesNode.getGrouping();
                 searchResult = YangModelManager.search(ref.getModule(), ref.getRevision(), ref.getName(),
-                        ElementIndexType.GROUPING, null, null);
+                        ElementIndexType.GROUPING, project, null);
             } else if (node instanceof BaseReference) {
                 BaseReference base = (BaseReference) node;
                 QName ref = base.getType();
                 searchResult = YangModelManager.search(ref.getModule(), ref.getRevision(), ref.getName(),
-                        ElementIndexType.IDENTITY, null, null);
+                        ElementIndexType.IDENTITY, project, null);
             }
 
             if (searchResult != null && searchResult.length > 0) {

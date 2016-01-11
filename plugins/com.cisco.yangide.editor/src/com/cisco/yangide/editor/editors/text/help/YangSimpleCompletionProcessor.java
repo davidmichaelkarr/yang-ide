@@ -434,6 +434,25 @@ public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor i
 
     protected TypedProposalsList getProposalsByMode(String prefix, CompletionKind proposalMode) {
         TypedProposalsList proposals = null;
+
+        // If the prefix contains a colon, get the module name corresponding to the prefix.
+        // Note that we're not changing the prefix, which will still include the Yang module prefix and
+        // the following colon.  We're only extracting the yang prefix so we can determine the name of
+        // the module imported by this module which that prefix corresponds to.  That "moduleFromPrefix" is
+        // sent on to limit the set of candidate nodes (if it's not null).  Remember that the yang prefix
+        // can be different from the module name.
+        String  moduleFromPrefix    = null;
+        if (prefix.indexOf(':') != -1) {
+            String[] pieces = prefix.split(":", 2);
+            if (pieces.length == 2) {
+                String          yangPrefix      = pieces[0].trim();
+                ModuleImport    moduleImport    = module.getImportByPrefix(yangPrefix);
+                if (moduleImport != null) {
+                    moduleFromPrefix   = moduleImport.getName();
+                }
+            }
+        }
+        
         switch (proposalMode) {
         case Import:
             proposals = getImportProposals(prefix, true);
@@ -442,10 +461,10 @@ public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor i
             proposals = getImportProposals(prefix, false);
             break;
         case Type:
-            proposals = getTypeProposals(prefix);
+            proposals = getTypeProposals(prefix, moduleFromPrefix);
             break;
         case Uses:
-            proposals = getUsesProposals(prefix);
+            proposals = getUsesProposals(prefix, moduleFromPrefix);
             break;
         case Include:
             proposals = getIncludeProposals(prefix);
@@ -613,7 +632,7 @@ public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor i
         return result;
     }
 
-    private TypedProposalsList getTypeProposals(String prefix) {
+    private TypedProposalsList getTypeProposals(String prefix, String limitToModule) {
         // bult-in types
         List<ICompletionProposal> bltInTypesProposals = new ArrayList<ICompletionProposal>();
         for (String proposal : fgBuiltinTypes) {
@@ -625,8 +644,14 @@ public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor i
         }
         Collections.sort(bltInTypesProposals, proposalComparator);
 
+        IProject    project = null;
+        if (editor != null && editor.getEditorInput() instanceof FileEditorInput) {
+            project = ((FileEditorInput) editor.getEditorInput()).getFile().getProject();
+        }
+
         // custom defined by user in typedef types
-        ElementIndexInfo[] customTypes = YangModelManager.search(null, null, null, ElementIndexType.TYPE, null, null);
+        ElementIndexInfo[] customTypes =
+                YangModelManager.search(limitToModule, null, null, ElementIndexType.TYPE, project, null);
 
         List<ICompletionProposal> customTypesProposals = new ArrayList<ICompletionProposal>();
 
@@ -660,14 +685,14 @@ public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor i
      * @param prefix
      * @return
      */
-    private TypedProposalsList getUsesProposals(String prefix) {
+    private TypedProposalsList getUsesProposals(String prefix, String limitToModule) {
         IProject    project = null;
         if (editor != null && editor.getEditorInput() instanceof FileEditorInput) {
             project = ((FileEditorInput) editor.getEditorInput()).getFile().getProject();
         }
         
         ElementIndexInfo[] groupings =
-                YangModelManager.search(null, null, null, ElementIndexType.GROUPING, project, null);
+                YangModelManager.search(limitToModule, null, null, ElementIndexType.GROUPING, project, null);
 
         List<ICompletionProposal> groupingProposals = new ArrayList<ICompletionProposal>();
 

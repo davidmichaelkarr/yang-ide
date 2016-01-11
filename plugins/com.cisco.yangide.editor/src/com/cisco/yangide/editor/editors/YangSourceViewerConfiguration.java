@@ -191,7 +191,7 @@ public class YangSourceViewerConfiguration extends TextSourceViewerConfiguration
     public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 
         ContentAssistant assistant = new ContentAssistant();
-        IContentAssistProcessor processor = new YangSimpleCompletionProcessor();
+        IContentAssistProcessor processor = new YangSimpleCompletionProcessor(getEditor());
         assistant.setContentAssistProcessor(processor, IDocument.DEFAULT_CONTENT_TYPE);
 
         assistant.setDocumentPartitioning(YangDocumentSetupParticipant.YANG_PARTITIONING);
@@ -259,7 +259,7 @@ public class YangSourceViewerConfiguration extends TextSourceViewerConfiguration
     /**
      * @return the editor
      */
-    protected ITextEditor getEditor() {
+    public ITextEditor getEditor() {
         return editor;
     }
 

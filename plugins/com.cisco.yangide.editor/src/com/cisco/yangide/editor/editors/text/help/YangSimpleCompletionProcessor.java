@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -39,6 +40,8 @@ import org.eclipse.jface.text.templates.TemplateContext;
 import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.part.FileEditorInput;
+import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.cisco.yangide.core.dom.ASTNode;
 import com.cisco.yangide.core.dom.Module;
@@ -68,8 +71,14 @@ import com.cisco.yangide.ui.internal.YangUIImages;
  */
 public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor implements IContentAssistProcessor {
 
+    private ITextEditor editor  = null;
+    
     private final static ICompletionProposal[] NO_PROPOSALS = new ICompletionProposal[0];
 
+    public YangSimpleCompletionProcessor(ITextEditor editor) {
+        this.editor = editor;
+    }
+    
     /**
      * Simple content assist tip closer. The tip is valid in a range of 5 characters around its
      * popup location.
@@ -652,7 +661,13 @@ public class YangSimpleCompletionProcessor extends TemplateCompletionProcessor i
      * @return
      */
     private TypedProposalsList getUsesProposals(String prefix) {
-        ElementIndexInfo[] groupings = YangModelManager.search(null, null, null, ElementIndexType.GROUPING, null, null);
+        IProject    project = null;
+        if (editor != null && editor.getEditorInput() instanceof FileEditorInput) {
+            project = ((FileEditorInput) editor.getEditorInput()).getFile().getProject();
+        }
+        
+        ElementIndexInfo[] groupings =
+                YangModelManager.search(null, null, null, ElementIndexType.GROUPING, project, null);
 
         List<ICompletionProposal> groupingProposals = new ArrayList<ICompletionProposal>();
 
